@@ -515,7 +515,10 @@ export default function App() {
         </div>
 
         {/* Top Controls & Navigation Switchers */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] text-[#8C887D] text-right">
+            <span id="vercount_value_site_pv">--</span> PV / <span id="vercount_value_site_uv">--</span> UV
+          </div>
           <button 
             onClick={() => { setActiveTab("assess"); setActiveSession(null); }}
             className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
