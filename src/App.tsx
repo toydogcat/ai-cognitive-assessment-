@@ -120,6 +120,17 @@ export default function App() {
   }, [patients]);
 
   useEffect(() => {
+    // Retry Vercount initialization
+    const checkVercount = setInterval(() => {
+      if ((window as any).vercount && typeof (window as any).vercount.fetch === 'function') {
+        (window as any).vercount.fetch();
+        clearInterval(checkVercount);
+      }
+    }, 500);
+    return () => clearInterval(checkVercount);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem("cognitive_sessions", JSON.stringify(sessions));
   }, [sessions]);
 
