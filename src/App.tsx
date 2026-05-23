@@ -130,6 +130,30 @@ export default function App() {
     return () => clearInterval(checkVercount);
   }, []);
 
+  // Iframe scroll sync with parent window (Luna AI Hub postMessage protocol)
+  useEffect(() => {
+    let lastScrollY = 0;
+    const scrollThreshold = 8; // sensitivity threshold
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+      if (Math.abs(currentScrollY - lastScrollY) < scrollThreshold && currentScrollY > 10) return;
+
+      const direction = currentScrollY > lastScrollY ? 'down' : 'up';
+
+      window.parent.postMessage({
+        type: 'iframe_scroll',
+        scrollY: currentScrollY,
+        direction: direction
+      }, '*');
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("cognitive_sessions", JSON.stringify(sessions));
   }, [sessions]);
