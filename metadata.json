@@ -1,0 +1,6 @@
+{
+  "name": "認知功能評估與輔助篩檢系統",
+  "description": "提供 MMSE 簡易心智量表、MoCA 蒙特利爾認知評估、CDT 畫鐘測驗、與 CASI 認知功能障礙篩檢量表之專業評估管理系統，支援受測者觸控手繪、評估者提示與智慧評估報表生成。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
