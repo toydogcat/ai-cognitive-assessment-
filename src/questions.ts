@@ -1,4 +1,4 @@
-import { EvaluationType, QuestionProgress } from "./types";
+import { EvaluationType, EvaluationForm, QuestionProgress } from "./types";
 
 export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[]> = {
   [EvaluationType.MMSE]: [
@@ -109,7 +109,7 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       score: 0,
       widgetType: "standard_checklist",
       checkedPoints: [
-        { label: "精準無誤複述 (1分)", scoreContribution: 1, checked: false }
+        { label: "精準無誤複述 【大家齊心協力過生活】 (1分)", scoreContribution: 1, checked: false }
       ]
     },
     {
@@ -185,8 +185,8 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       id: "moca_2",
       category: "視覺空間與執行功能",
       title: "三維立方體模仿",
-      prompt: "「請您在右邊的畫布上，盡可能精準地模仿模仿畫出這個立體正方形（立方體）。」",
-      testerAdvice: "要求繪製出完整的三維效果。要素：1) 整體結構為三維立體；2) 所有線條基本平行且相接；3) 不能遗漏任何一條稜線。若畫成一般的平面正方形，計 0 分。",
+      prompt: "「請您在右邊的畫布上，盡可能精準地模仿畫出這個立體正方形（立方體）。」",
+      testerAdvice: "要求繪製出完整的三維效果。要素：1) 整體結構為三維立體；2) 所有線條基本平行且相接；3) 不能遺漏任何一條稜線。若畫成一般的平面正方形，計 0 分。",
       maxScore: 1,
       score: 0,
       widgetType: "drawing",
@@ -213,7 +213,7 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       id: "moca_4",
       category: "語言命名",
       title: "動物識圖與命名",
-      prompt: "「請問這三張卡片上的動物分別叫什麼名字？」(出示：獅子、犀牛、駱駝)',",
+      prompt: "「請問這三張卡片上的動物分別叫什麼名字？」(出示：獅子、犀牛、駱駝)",
       testerAdvice: "必須名詞精確。獅子、犀牛（獨角獸不可）、駱駝（單雙峰皆可）。",
       maxScore: 3,
       score: 0,
@@ -261,6 +261,34 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       widgetType: "standard_checklist",
       checkedPoints: [
         { label: "全對或僅有1次以下失誤 (1分)", scoreContribution: 1, checked: false }
+      ]
+    },
+    {
+      id: "moca_lang_rep",
+      category: "語言覆述",
+      title: "句子語法覆述",
+      prompt: "「現在請跟著我完整地唸出這兩句話。我唸完第一句後，請您馬上跟著唸：【我只知道張三今天該來幫忙。】...... 很好，現在請聽第二句，也請跟著唸：【貓總是躲在沙發底下，當狗在房裡的時候。】」",
+      testerAdvice: "必須一字不差且語氣連貫地複述。如果有錯字、漏字或加字，該句即不給分。每一句答對得 1 分，共 2 分。",
+      maxScore: 2,
+      score: 0,
+      widgetType: "standard_checklist",
+      checkedPoints: [
+        { label: "第一句複述無誤 (1分)", scoreContribution: 1, checked: false },
+        { label: "第二句複述無誤 (1分)", scoreContribution: 1, checked: false }
+      ]
+    },
+    {
+      id: "moca_calculation",
+      category: "注意力與計算力",
+      title: "100 連續減 7",
+      prompt: "「現在請您心算，用 100 連續減去 7。100 減去 7 是多少？再來呢...（請受測者連續回答 5 次減 7 的數值）」",
+      testerAdvice: "請記錄長輩的回答序列。標準序列：93、86、79、72、65。若中間算錯，但下一次在錯的基礎上減對了，後者仍可給分。\n評分標準：\n- 答對 3 次或以上：得 3 分\n- 答對 1 或 2 次：得 1 分\n- 全錯：得 0 分",
+      maxScore: 3,
+      score: 0,
+      widgetType: "calculation",
+      checkedPoints: [
+        { label: "連減7對3次或以上 (給3分)", scoreContribution: 3, checked: false },
+        { label: "連減7僅對1-2次 (給1分) [不與3分共用]", scoreContribution: 1, checked: false }
       ]
     },
     {
@@ -333,7 +361,7 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       category: "畫鐘測試",
       title: "CDT畫鐘測驗 (完整版)",
       prompt: "「阿公/阿嬤，請在下面這個畫布上面，幫我用筆畫一個大大的圓形時鐘。先把 1 到 12 的數字都填寫上去，最後，幫我畫上時針跟分針，而指針的位置必須精準畫在【11點10分】。」",
-      testerAdvice: "本項為老年精神醫學核心檢測，評估頂葉(Parietal lobe)視覺空間、執行計畫與抗干擾能力。\n長輩如果把分針畫在數字10而非2，代表受字面「10分」干擾，為额叶執行功能受損重要表徵。圓形不重疊或數字全擠在半邊提示偏側忽視或視覺規劃障礙。",
+      testerAdvice: "本項為老年精神醫學核心檢測，評估頂葉(Parietal lobe)視覺空間、執行計畫與抗干擾能力。\n長輩如果把分針畫在數字10而非2，代表受字面「10分」干擾，為額葉執行功能受損重要表徵。圓形不重疊或數字全擠在半邊提示偏側忽視或視覺規劃障礙。",
       maxScore: 3,
       score: 0,
       widgetType: "drawing",
@@ -349,7 +377,7 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       id: "casi_1",
       category: "長期記憶常識",
       title: "台灣三大傳統節日與元首認知",
-      prompt: "「阿公/阿嬤，請問台灣一年之中，最出名、大家最常慶祝的三個传统大節日是什麼？另外，請問您知道現代的台灣總統是誰嗎？」",
+      prompt: "「阿公/阿嬤，請問台灣一年之中，最出名、大家最常慶祝的三個傳統大節日是什麼？另外，請問您知道現代的台灣總統是誰嗎？」",
       testerAdvice: "傳統三大節日標準：春節（過年）、端午節、中秋節。回答元宵或清明不計分，但考慮本土，若長輩描述清晰過年、划龍舟、吃粽子、吃月餅可通融計之。總統名需回答出完整中文名（若因近期大選政黨更迭，可依據時事正確回答計分）。",
       maxScore: 10,
       score: 0,
@@ -366,13 +394,13 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       category: "抽象思考與常理解釋",
       title: "抽象思考與危機情境解決力",
       prompt: "「現在請回答我三個日常生活的常識題。 第一：如果您在路上撿到一封信，上面貼好了郵票也寫有了地址，請問您會怎麼做？ 第二：我們為什麼需要洗衣服？ 第三：我們在過馬路時，為什麼一定要遵守紅綠燈規則？」",
-      testerAdvice: "標準回答與逻辑：\n1. 信件：送交警察局、或直接丟進郵筒(得4分)。其他如「置之不理」或「撕掉」得0分。\n2. 洗衣服：保持乾淨、除臭、衛生避免生病、衣服穿久會髒(得4分)。僅說「好看」得1分。\n3. 紅綠燈：防止車禍、保障行人安全、遵守交通法規(得4分)。不清楚或描述混亂者得 0 分。",
+      testerAdvice: "標準回答與邏輯：\n1. 信件：送交警察局、或直接丟進郵筒(得4分)。其他如「置之不理」或「撕掉」得0分。\n2. 洗衣服：保持乾淨、除臭、衛生避免生病、衣服穿久會髒(得4分)。僅說「好看」得1分。\n3. 紅綠燈：防止車禍、保障行人安全、遵守交通法規(得4分)。不清楚或描述混亂者得 0 分。",
       maxScore: 12,
       score: 0,
       widgetType: "standard_checklist",
       checkedPoints: [
         { label: "信件處理：投遞郵筒或交由警察等適宜回答 (4分)", scoreContribution: 4, checked: false },
-        { label: "洗衣服邏輯：衛生、除汙、防菌等核心意義 (4分)", scoreContribution: 4, checked: false },
+        { label: "洗衣服邏輯：衛生、除污、防菌等核心意義 (4分)", scoreContribution: 4, checked: false },
         { label: "紅綠燈規則：交通安全、非混亂之避險秩序觀念 (4分)", scoreContribution: 4, checked: false }
       ]
     },
@@ -412,7 +440,7 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
       id: "casi_5",
       category: "短期延遲記憶 (干擾後)",
       title: "三詞彙二次回憶測試與提示輔助",
-      prompt: "「（在測試前先請長輩跟念記住：【玉山、公車、報紙】並在中間進行了定向等其他測驗干擾 5-10 分鐘，此處發問：） 阿公/阿嬤，等了這麼久，還記得刚才最前面的那三個東西嗎？」",
+      prompt: "「（在測試前先請長輩跟念記住：【玉山、公車、報紙】並在中間進行了定向等其他測驗干擾 5-10 分鐘，此處發問：） 阿公/阿嬤，等了這麼久，還記得最前面的那三個東西嗎？」",
       testerAdvice: "受測者回答計分規則：\n- 無提示(自發)答對一詞：5分。\n- 若答不出，給予類別提示（如：一個是台灣最高的山、一個是馬路上的大巴士、一個是天天要看的閱讀刊物），提示後答對：3分。\n- 提示也錯者：0分。",
       maxScore: 15,
       score: 0,
@@ -474,6 +502,90 @@ export const DEFAULT_QUESTIONS_BY_TYPE: Record<EvaluationType, QuestionProgress[
     }
   ]
 };
+
+export function getQuestionsByForm(type: EvaluationType, form: EvaluationForm = EvaluationForm.FORM_A): QuestionProgress[] {
+  // 1. 深拷貝 Form A 預設題目
+  const questions: QuestionProgress[] = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS_BY_TYPE[type]));
+
+  if (form === EvaluationForm.FORM_B) {
+    // 2. 對 Form B 進行同位素替換
+    questions.forEach((q) => {
+      // MMSE 替換
+      if (type === EvaluationType.MMSE) {
+        if (q.id === "mmse_3" || q.id === "mmse_5") {
+          q.wordsToRemember = ["梅花", "國旗", "公車"];
+          q.prompt = q.prompt.replace("【蘋果、桌子、銅板】", "【梅花、國旗、公車】");
+          q.checkedPoints = [
+            { label: "梅花 (1分)", scoreContribution: 1, checked: false },
+            { label: "國旗 (1分)", scoreContribution: 1, checked: false },
+            { label: "公車 (1分)", scoreContribution: 1, checked: false }
+          ];
+        }
+        if (q.id === "mmse_7") {
+          q.prompt = q.prompt.replace("【大家齊心協力過生活】", "【國泰民安風調雨順】");
+          q.checkedPoints[0].label = "精準無誤複述 【國泰民安風調雨順】 (1分)";
+        }
+      }
+
+      // MoCA 替換
+      if (type === EvaluationType.MOCA) {
+        if (q.id === "moca_3") {
+          q.prompt = q.prompt.replace("11 點 10 分", "8 點 20 分");
+          q.checkedPoints[2].label = "指針時差：短針朝向8, 長針精準指向4 (20分的位置意指4) (1分)";
+        }
+        if (q.id === "moca_5" || q.id === "moca_10") {
+          q.wordsToRemember = ["香蕉", "日曆", "玫瑰", "皮革", "藍色"];
+          q.prompt = q.prompt.replace("【紅包、火車、茉莉、絲綢、紅色】", "【香蕉、日曆、玫瑰、皮革、藍色】");
+          if (q.id === "moca_10") {
+            q.checkedPoints = [
+              { label: "香蕉 (1分)", scoreContribution: 1, checked: false },
+              { label: "日曆 (1分)", scoreContribution: 1, checked: false },
+              { label: "玫瑰 (1分)", scoreContribution: 1, checked: false },
+              { label: "皮革 (1分)", scoreContribution: 1, checked: false },
+              { label: "藍色 (1分)", scoreContribution: 1, checked: false }
+            ];
+          }
+        }
+        if (q.id === "moca_6") {
+          q.prompt = "「現在我們要進行數字背誦。我會先唸一串數字，請您照著順序背出來：【5 - 8 - 2 - 9 - 1】。接著，我會唸另外一組，請您『倒過來』背出來，例如我説 7-4-2，您要說 2-4-7。請聽：【6 - 1 - 9】。」";
+          q.checkedPoints = [
+            { label: "順唸正確 (5-8-2-9-1) (1分)", scoreContribution: 1, checked: false },
+            { label: "倒唸正確 (9-1-6) (1分)", scoreContribution: 1, checked: false }
+          ];
+        }
+        if (q.id === "moca_lang_rep") {
+          q.prompt = "「現在請跟著我完整地唸出這兩句話。我唸完第一句後，請您馬上跟著唸：【我只相信李四是今天來打掃的人。】...... 很好，現在請聽第二句，也請跟著唸：【狗總是守在門口，當主人不在家的時候。】」";
+          q.checkedPoints = [
+            { label: "第一句複述無誤 (1分)", scoreContribution: 1, checked: false },
+            { label: "第二句複述無誤 (1分)", scoreContribution: 1, checked: false }
+          ];
+        }
+      }
+
+      // CASI 替換
+      if (type === EvaluationType.CASI) {
+        if (q.id === "casi_5") {
+          q.wordsToRemember = ["阿里山", "火車", "收音機"];
+          q.prompt = q.prompt.replace("【玉山、公車、報紙】", "【阿里山、火車、收音機】");
+          q.checkedPoints = [
+            { label: "【阿里山】自行想出 (5分)", scoreContribution: 5, checked: false },
+            { label: "【阿里山】給予提示「是一座山」後答對 (3分)", scoreContribution: 3, checked: false },
+            { label: "【火車】自行想出 (5分)", scoreContribution: 5, checked: false },
+            { label: "【火車】給予提示「鐵路上跑的火車」後答對 (3分)", scoreContribution: 3, checked: false },
+            { label: "【收音機】自行想出 (5分)", scoreContribution: 5, checked: false },
+            { label: "【收音機】給予提示「聽廣播音樂的機器」後答對 (3分)", scoreContribution: 3, checked: false }
+          ];
+        }
+        if (q.id === "casi_8") {
+          q.prompt = q.prompt.replace("【吃水果拜樹頭】", "【留得青山在不怕沒柴燒】");
+          q.checkedPoints[3].label = "口頭完整覆述「留得青山在不怕沒柴燒」無添加漏字 (6分)";
+        }
+      }
+    });
+  }
+
+  return questions;
+}
 
 export function getCognitiveStatusDescription(type: EvaluationType, score: number): string {
   switch (type) {

@@ -5,6 +5,11 @@ export enum EvaluationType {
   CASI = "CASI"
 }
 
+export enum EvaluationForm {
+  FORM_A = "Form_A",
+  FORM_B = "Form_B"
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ export interface TestSession {
   id: string;
   patientId: string;
   testType: EvaluationType;
+  formVersion: EvaluationForm;
   date: string;
   progressIndex: number;
   questions: QuestionProgress[];

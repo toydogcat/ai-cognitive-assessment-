@@ -30,8 +30,8 @@ import {
   Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { EvaluationType, Patient, DrawingPath, QuestionProgress, TestSession } from "./types";
-import { DEFAULT_QUESTIONS_BY_TYPE, getCognitiveStatusDescription } from "./questions";
+import { EvaluationType, EvaluationForm, Patient, DrawingPath, QuestionProgress, TestSession } from "./types";
+import { DEFAULT_QUESTIONS_BY_TYPE, getQuestionsByForm, getCognitiveStatusDescription } from "./questions";
 import { DrawingCanvas } from "./components/DrawingCanvas";
 
 // Initial sample patient registers
@@ -79,6 +79,7 @@ export default function App() {
   });
 
   const [activeSession, setActiveSession] = useState<TestSession | null>(null);
+  const [selectedForm, setSelectedForm] = useState<EvaluationForm>(EvaluationForm.FORM_A);
   
   // View mode for workstation: "split" (both), "subject" (subject only), "assessor" (assessor only)
   const [viewPerspective, setViewPerspective] = useState<"split" | "subject" | "assessor">("split");
@@ -114,12 +115,50 @@ export default function App() {
     return patients.find(p => p.id === selectedPatientId) || patients[0];
   }, [patients, selectedPatientId]);
 
+  const [siteStats, setSiteStats] = useState({ pv: "--", uv: "--" });
+
   // Sync state to local storage
   useEffect(() => {
     localStorage.setItem("cognitive_patients", JSON.stringify(patients));
   }, [patients]);
 
   useEffect(() => {
+    // Create hidden elements for Vercount SDK to populate safely without React Virtual DOM interference
+    let hiddenPv = document.getElementById("vercount_value_site_pv_hidden");
+    let hiddenUv = document.getElementById("vercount_value_site_uv_hidden");
+    
+    if (!hiddenPv) {
+      hiddenPv = document.createElement("span");
+      hiddenPv.id = "vercount_value_site_pv";
+      hiddenPv.style.display = "none";
+      document.body.appendChild(hiddenPv);
+    }
+    if (!hiddenUv) {
+      hiddenUv = document.createElement("span");
+      hiddenUv.id = "vercount_value_site_uv";
+      hiddenUv.style.display = "none";
+      document.body.appendChild(hiddenUv);
+    }
+
+    // Monitor changes to these hidden nodes and sync with React State
+    const observer = new MutationObserver(() => {
+      const pvVal = hiddenPv?.innerText || "--";
+      const uvVal = hiddenUv?.innerText || "--";
+      if (pvVal !== "--" || uvVal !== "--") {
+        setSiteStats({ pv: pvVal, uv: uvVal });
+      }
+    });
+
+    if (hiddenPv) observer.observe(hiddenPv, { childList: true, characterData: true, subtree: true });
+    if (hiddenUv) observer.observe(hiddenUv, { childList: true, characterData: true, subtree: true });
+
+    // Initial check for already populated values
+    const initialPv = hiddenPv?.innerText || "--";
+    const initialUv = hiddenUv?.innerText || "--";
+    if (initialPv !== "--" || initialUv !== "--") {
+      setSiteStats({ pv: initialPv, uv: initialUv });
+    }
+
     // Retry Vercount initialization
     const checkVercount = setInterval(() => {
       if ((window as any).vercount && typeof (window as any).vercount.fetch === 'function') {
@@ -127,7 +166,13 @@ export default function App() {
         clearInterval(checkVercount);
       }
     }, 500);
-    return () => clearInterval(checkVercount);
+
+    return () => {
+      clearInterval(checkVercount);
+      observer.disconnect();
+      hiddenPv?.remove();
+      hiddenUv?.remove();
+    };
   }, []);
 
   // Iframe scroll sync with parent window (Luna AI Hub postMessage protocol)
@@ -233,11 +278,11 @@ export default function App() {
   }, []);
 
   // Initialize a new test session
-  const handleStartNewSession = (type: EvaluationType) => {
+  const handleStartNewSession = (type: EvaluationType, form: EvaluationForm = selectedForm) => {
     if (!activePatient) return;
     
     // Copy the default questions lists
-    const defaultQuestions = DEFAULT_QUESTIONS_BY_TYPE[type];
+    const defaultQuestions = getQuestionsByForm(type, form);
     const clonedQuestions: QuestionProgress[] = defaultQuestions.map((q) => ({
       ...q,
       checkedPoints: q.checkedPoints.map((cp) => ({ ...cp, checked: false })),
@@ -250,6 +295,7 @@ export default function App() {
       id: `session_${Date.now()}`,
       patientId: activePatient.id,
       testType: type,
+      formVersion: form,
       date: new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" }),
       progressIndex: 0,
       questions: clonedQuestions,
@@ -367,13 +413,30 @@ export default function App() {
         totalMax += q.maxScore;
       });
 
-      const finalStatus = getCognitiveStatusDescription(activeSession.testType, totalAccumulated);
+      // MoCA Education bonus logic (Education <= 12 years: elementary, junior high, senior high/vocational, illiterate)
+      let educationBonus = 0;
+      if (activeSession.testType === EvaluationType.MOCA && activePatient) {
+        const edu = activePatient.education || "";
+        const needsBonus = 
+          edu.includes("不識字") || 
+          edu.includes("自學") ||
+          edu.includes("國小") || 
+          edu.includes("國中") || 
+          edu.includes("高中") || 
+          edu.includes("高職");
+        if (needsBonus) {
+          educationBonus = 1;
+        }
+      }
+
+      const adjustedTotal = Math.min(totalAccumulated + educationBonus, totalMax);
+      const finalStatus = getCognitiveStatusDescription(activeSession.testType, adjustedTotal);
 
       const completedSession: TestSession = {
         ...activeSession,
         isCompleted: true,
         scoreSummary: {
-          total: totalAccumulated,
+          total: adjustedTotal,
           max: totalMax,
           cognitiveStatus: finalStatus
         }
@@ -486,6 +549,11 @@ export default function App() {
             education: activePatient.education,
             notes: activePatient.notes
           },
+          formVersion: activeSession.formVersion,
+          educationBonusApplied: activeSession.testType === EvaluationType.MOCA && (() => {
+            const edu = activePatient.education || "";
+            return edu.includes("不識字") || edu.includes("自學") || edu.includes("國小") || edu.includes("國中") || edu.includes("高中") || edu.includes("高職");
+          })(),
           scores: scoreCollection,
           assessmentData: assessmentData
         })
@@ -552,7 +620,7 @@ export default function App() {
         {/* Top Controls & Navigation Switchers */}
         <div className="flex items-center gap-4">
           <div className="text-[10px] text-[#8C887D] text-right">
-            <span id="vercount_value_site_pv">--</span> PV / <span id="vercount_value_site_uv">--</span> UV
+            <span>{siteStats.pv}</span> PV / <span>{siteStats.uv}</span> UV
           </div>
           <button 
             onClick={() => { setActiveTab("assess"); setActiveSession(null); }}
@@ -771,9 +839,33 @@ export default function App() {
             {/* If no test session is initiated: Show Test Toolkit Selector */}
             {!activeSession ? (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-4">
-                <div className="md:col-span-4 max-w-2xl">
-                  <h2 className="text-2xl font-serif text-[#2D2A26] italic font-bold">選擇專業篩檢工具</h2>
-                  <p className="text-sm text-[#8C887D] mt-1">請為受測長輩選擇一個最合適其教育程度或臨床需求的心智測驗量表：</p>
+                <div className="md:col-span-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E5E2D9] pb-6">
+                  <div>
+                    <h2 className="text-2xl font-serif text-[#2D2A26] italic font-bold">選擇專業篩檢工具</h2>
+                    <p className="text-sm text-[#8C887D] mt-1">請為受測長輩選擇一個最合適其教育程度或臨床需求的心智測驗量表：</p>
+                  </div>
+                  
+                  {/* Form Select Toggle Buttons */}
+                  <div className="flex items-center gap-2 self-start sm:self-center bg-[#F0EEE8] p-1.5 rounded-xl border border-[#D9D5CB]">
+                    <span className="text-xs font-bold text-[#8C887D] px-2.5">題庫版本：</span>
+                    {(["Form_A", "Form_B"] as const).map((formVal) => {
+                      const isSelected = selectedForm === (formVal === "Form_A" ? EvaluationForm.FORM_A : EvaluationForm.FORM_B);
+                      return (
+                        <button
+                          key={formVal}
+                          type="button"
+                          onClick={() => setSelectedForm(formVal === "Form_A" ? EvaluationForm.FORM_A : EvaluationForm.FORM_B)}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+                            isSelected 
+                              ? "bg-[#5C6E58] text-white shadow-sm" 
+                              : "text-gray-600 hover:text-gray-800"
+                          }`}
+                        >
+                          {formVal === "Form_A" ? "Form A (預設版)" : "Form B (對等平行版)"}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* MMSE */}
@@ -876,6 +968,9 @@ export default function App() {
                     <span className="px-3 py-1 rounded bg-[#5C6E58] text-white text-xs font-bold tracking-wider">
                       {activeSession.testType}
                     </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                      {activeSession.formVersion === EvaluationForm.FORM_A ? "Form A" : "Form B"}
+                    </span>
                     <span className="text-xs text-gray-400">|</span>
                     <span className="text-xs font-semibold text-gray-600">
                       進度項目： {String(activeSession.progressIndex + 1).padStart(2, "0")} / {String(activeSession.questions.length).padStart(2, "0")}
@@ -959,6 +1054,24 @@ export default function App() {
                             {activeSession.scoreSummary?.total}
                             <span className="text-xl text-gray-400 font-normal"> / {activeSession.scoreSummary?.max}</span>
                           </h4>
+                          {activeSession.testType === EvaluationType.MOCA && activePatient && (() => {
+                            const edu = activePatient.education || "";
+                            const needsBonus = 
+                              edu.includes("不識字") || 
+                              edu.includes("自學") ||
+                              edu.includes("國小") || 
+                              edu.includes("國中") || 
+                              edu.includes("高中") || 
+                              edu.includes("高職");
+                            if (needsBonus) {
+                              return (
+                                <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full font-bold mt-2.5 inline-block">
+                                  ✦ 已校正納入教育程度加分 (+1分)
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                           <div className="mt-3 bg-[#5C6E58]/10 text-[#5C6E58] px-4 py-1.5 rounded-full text-sm font-bold border border-[#5C6E58]/30">
                             {activeSession.scoreSummary?.cognitiveStatus}
                           </div>
@@ -1578,6 +1691,9 @@ export default function App() {
                           <div>
                             <span className="px-2 py-0.5 rounded bg-white border border-[#D9D5CB] text-[10px] font-mono font-bold text-[#5C6E58] tracking-wider uppercase">
                               {session.testType} 量表
+                            </span>
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                              {session.formVersion === EvaluationForm.FORM_B ? "Form B" : "Form A"}
                             </span>
                             <h4 className="text-sm font-bold text-[#2D2A26] mt-2">
                               受測長輩：{sessionPatient.name} 
